@@ -890,13 +890,11 @@ export interface IPaginatedListOfTodoItemBriefDto {
     hasNextPage?: boolean;
 }
 
-export class TodoItemBriefDto implements ITodoItemBriefDto {
-    id?: number;
-    listId?: number;
-    title?: string | undefined;
-    done?: boolean;
+export class BaseDto implements IBaseDto {
+    deletedOn?: Date | undefined;
+    isDeleted?: boolean;
 
-    constructor(data?: ITodoItemBriefDto) {
+    constructor(data?: IBaseDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -907,6 +905,44 @@ export class TodoItemBriefDto implements ITodoItemBriefDto {
 
     init(_data?: any) {
         if (_data) {
+            this.deletedOn = _data["deletedOn"] ? new Date(_data["deletedOn"].toString()) : <any>undefined;
+            this.isDeleted = _data["isDeleted"];
+        }
+    }
+
+    static fromJS(data: any): BaseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new BaseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["deletedOn"] = this.deletedOn ? this.deletedOn.toISOString() : <any>undefined;
+        data["isDeleted"] = this.isDeleted;
+        return data;
+    }
+}
+
+export interface IBaseDto {
+    deletedOn?: Date | undefined;
+    isDeleted?: boolean;
+}
+
+export class TodoItemBriefDto extends BaseDto implements ITodoItemBriefDto {
+    id?: number;
+    listId?: number;
+    title?: string | undefined;
+    done?: boolean;
+
+    constructor(data?: ITodoItemBriefDto) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+        if (_data) {
             this.id = _data["id"];
             this.listId = _data["listId"];
             this.title = _data["title"];
@@ -914,24 +950,25 @@ export class TodoItemBriefDto implements ITodoItemBriefDto {
         }
     }
 
-    static fromJS(data: any): TodoItemBriefDto {
+    static override fromJS(data: any): TodoItemBriefDto {
         data = typeof data === 'object' ? data : {};
         let result = new TodoItemBriefDto();
         result.init(data);
         return result;
     }
 
-    toJSON(data?: any) {
+    override toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["listId"] = this.listId;
         data["title"] = this.title;
         data["done"] = this.done;
+        super.toJSON(data);
         return data;
     }
 }
 
-export interface ITodoItemBriefDto {
+export interface ITodoItemBriefDto extends IBaseDto {
     id?: number;
     listId?: number;
     title?: string | undefined;
@@ -1237,22 +1274,18 @@ export interface IColourDto {
     code?: string;
 }
 
-export class TodoListDto implements ITodoListDto {
+export class TodoListDto extends BaseDto implements ITodoListDto {
     id?: number;
     title?: string | undefined;
     colour?: string | undefined;
     items?: TodoItemDto[];
 
     constructor(data?: ITodoListDto) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
+        super(data);
     }
 
-    init(_data?: any) {
+    override init(_data?: any) {
+        super.init(_data);
         if (_data) {
             this.id = _data["id"];
             this.title = _data["title"];
@@ -1265,14 +1298,14 @@ export class TodoListDto implements ITodoListDto {
         }
     }
 
-    static fromJS(data: any): TodoListDto {
+    static override fromJS(data: any): TodoListDto {
         data = typeof data === 'object' ? data : {};
         let result = new TodoListDto();
         result.init(data);
         return result;
     }
 
-    toJSON(data?: any) {
+    override toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["title"] = this.title;
@@ -1282,18 +1315,19 @@ export class TodoListDto implements ITodoListDto {
             for (let item of this.items)
                 data["items"].push(item.toJSON());
         }
+        super.toJSON(data);
         return data;
     }
 }
 
-export interface ITodoListDto {
+export interface ITodoListDto extends IBaseDto {
     id?: number;
     title?: string | undefined;
     colour?: string | undefined;
     items?: TodoItemDto[];
 }
 
-export class TodoItemDto implements ITodoItemDto {
+export class TodoItemDto extends BaseDto implements ITodoItemDto {
     id?: number;
     listId?: number;
     title?: string | undefined;
@@ -1304,15 +1338,11 @@ export class TodoItemDto implements ITodoItemDto {
     colour?: string | undefined;
 
     constructor(data?: ITodoItemDto) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
+        super(data);
     }
 
-    init(_data?: any) {
+    override init(_data?: any) {
+        super.init(_data);
         if (_data) {
             this.id = _data["id"];
             this.listId = _data["listId"];
@@ -1329,14 +1359,14 @@ export class TodoItemDto implements ITodoItemDto {
         }
     }
 
-    static fromJS(data: any): TodoItemDto {
+    static override fromJS(data: any): TodoItemDto {
         data = typeof data === 'object' ? data : {};
         let result = new TodoItemDto();
         result.init(data);
         return result;
     }
 
-    toJSON(data?: any) {
+    override toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["listId"] = this.listId;
@@ -1350,11 +1380,12 @@ export class TodoItemDto implements ITodoItemDto {
         }
         data["note"] = this.note;
         data["colour"] = this.colour;
+        super.toJSON(data);
         return data;
     }
 }
 
-export interface ITodoItemDto {
+export interface ITodoItemDto extends IBaseDto {
     id?: number;
     listId?: number;
     title?: string | undefined;

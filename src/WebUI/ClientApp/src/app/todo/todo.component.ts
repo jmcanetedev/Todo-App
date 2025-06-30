@@ -158,7 +158,7 @@ export class TodoComponent implements OnInit {
           this.tags = []
         }
         this.selectedItem.tags.push(tagDto);
-        this.tags.push(tagDto);
+        this.tags = this.selectedItem.tags;
       },
       error => {
         const errors = JSON.parse(error.response);
@@ -171,6 +171,7 @@ export class TodoComponent implements OnInit {
     );
     this.isAddingTag = false;
   }
+
   addTagInLine(todoItemId: number, tagName: string): void {
     const newTag = {
       todoItemId: todoItemId,
@@ -266,7 +267,8 @@ export class TodoComponent implements OnInit {
     this.listsClient.delete(this.selectedList.id).subscribe(
       () => {
         this.deleteListModalRef.hide();
-        this.lists = this.lists.filter(t => t.id !== this.selectedList.id);
+        this.selectedList.deletedOn = new Date(Date.now());
+        this.lists = this.lists.filter(t => t.id !== this.selectedList.id || t.deletedOn === undefined);
         if (this.lists.length) {
           this.onListSelection(this.lists[0]);
         }
@@ -362,7 +364,7 @@ export class TodoComponent implements OnInit {
           result => {
             item.id = result;
             var filter = this.tagsList.find(c => c.id === this.filterTag)
-            if (filter !== undefined) {
+            if (filter !== undefined && this.filterTag !==0) {
               this.addTagInLine(item.id, filter.name);
             }
           },
@@ -403,16 +405,18 @@ export class TodoComponent implements OnInit {
     if (this.itemDetailsModalRef) {
       this.itemDetailsModalRef.hide();
     }
-
+    const itemIndex = this.selectedList.items.indexOf(this.selectedItem);
     if (item.id === 0) {
-      const itemIndex = this.selectedList.items.indexOf(this.selectedItem);
       this.selectedList.items.splice(itemIndex, 1);
+      this.searchTodoItems();
+
     } else {
+      item.deletedOn = new Date(Date.now());
       this.itemsClient.delete(item.id).subscribe(
-        () =>
-        (this.selectedList.items = this.selectedList.items.filter(
-          t => t.id !== item.id
-        )),
+        () => {
+          this.selectedList.items = this.selectedList.items.filter(t => t.id !== item.id || t.deletedOn === undefined)
+          this.searchTodoItems();
+        },
         error => console.error(error)
       );
     }
