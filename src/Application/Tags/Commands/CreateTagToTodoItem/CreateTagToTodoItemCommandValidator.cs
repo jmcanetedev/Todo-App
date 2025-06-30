@@ -6,7 +6,11 @@ public class CreateTagToTodoItemCommandValidator : AbstractValidator<CreateTagTo
     public CreateTagToTodoItemCommandValidator()
     {
         RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Tag Name is required.")
-            .MaximumLength(50).WithMessage("Tag Name must not exceed 50 characters.");
+            .MaximumLength(50)
+            .NotEmpty();
+
+        RuleFor(x => x.TodoItemId).Must(x => x > 0)
+            .WithMessage("TodoItemId must be greater than 0")
+            .NotEmpty();
     }
 }
