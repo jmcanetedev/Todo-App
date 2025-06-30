@@ -7,6 +7,7 @@ using Todo_App.Application.TodoItems.Commands.UpdateTodoItemDetail;
 using Todo_App.Application.TodoLists.Commands.CreateTodoList;
 using Todo_App.Domain.Entities;
 using Todo_App.Domain.Enums;
+using Todo_App.Domain.ValueObjects;
 
 namespace Todo_App.Application.IntegrationTests.TodoItems.Commands;
 
@@ -42,6 +43,7 @@ public class UpdateTodoItemDetailTests : BaseTestFixture
             Id = itemId,
             ListId = listId,
             Note = "A1",
+            Colour = Colour.White.Code,
             Priority = PriorityLevel.High
         };
 
@@ -53,6 +55,9 @@ public class UpdateTodoItemDetailTests : BaseTestFixture
         item!.ListId.Should().Be(command.ListId);
         item.Note.Should().Be(command.Note);
         item.Priority.Should().Be(command.Priority);
+        
+        item.Colour.Should().Be(command.Colour);
+
         item.LastModifiedBy.Should().NotBeNull();
         item.LastModifiedBy.Should().Be(userId);
         item.LastModified.Should().NotBeNull();

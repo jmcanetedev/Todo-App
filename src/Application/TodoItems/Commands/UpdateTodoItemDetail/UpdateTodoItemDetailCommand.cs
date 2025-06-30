@@ -9,14 +9,12 @@ namespace Todo_App.Application.TodoItems.Commands.UpdateTodoItemDetail;
 public record UpdateTodoItemDetailCommand : IRequest
 {
     public int Id { get; init; }
-
     public int ListId { get; init; }
-
-    public PriorityLevel Priority { get; init; }
-
-    public string? Note { get; init; }
+    public string? Title { get; init; }
+    public string Colour { get; init; } = string.Empty;
+    public PriorityLevel Priority { get; init; } = PriorityLevel.None;
+    public string? Note { get; init; } = string.Empty;
 }
-
 public class UpdateTodoItemDetailCommandHandler : IRequestHandler<UpdateTodoItemDetailCommand>
 {
     private readonly IApplicationDbContext _context;
@@ -39,6 +37,8 @@ public class UpdateTodoItemDetailCommandHandler : IRequestHandler<UpdateTodoItem
         entity.ListId = request.ListId;
         entity.Priority = request.Priority;
         entity.Note = request.Note;
+
+        entity.SetBackgroundColour(request.Colour);
 
         await _context.SaveChangesAsync(cancellationToken);
 

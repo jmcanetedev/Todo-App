@@ -452,6 +452,9 @@
           "title": {
             "type": "string",
             "nullable": true
+          },
+          "colour": {
+            "type": "string"
           }
         }
       },
@@ -483,6 +486,13 @@
           "listId": {
             "type": "integer",
             "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "colour": {
+            "type": "string"
           },
           "priority": {
             "$ref": "#/components/schemas/PriorityLevel"
@@ -519,6 +529,12 @@
               "$ref": "#/components/schemas/PriorityLevelDto"
             }
           },
+          "supportedColours": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColourDto"
+            }
+          },
           "lists": {
             "type": "array",
             "items": {
@@ -538,6 +554,18 @@
           "name": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "ColourDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
           }
         }
       },
@@ -589,6 +617,10 @@
             "format": "int32"
           },
           "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "colour": {
             "type": "string",
             "nullable": true
           }

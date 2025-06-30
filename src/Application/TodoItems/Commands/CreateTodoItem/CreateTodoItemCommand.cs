@@ -8,8 +8,8 @@ namespace Todo_App.Application.TodoItems.Commands.CreateTodoItem;
 public record CreateTodoItemCommand : IRequest<int>
 {
     public int ListId { get; init; }
-
     public string? Title { get; init; }
+    public string Colour { get; init; } = string.Empty;
 }
 
 public class CreateTodoItemCommandHandler : IRequestHandler<CreateTodoItemCommand, int>
@@ -31,6 +31,8 @@ public class CreateTodoItemCommandHandler : IRequestHandler<CreateTodoItemComman
         };
 
         entity.AddDomainEvent(new TodoItemCreatedEvent(entity));
+        
+        entity.SetBackgroundColour(request.Colour);
 
         _context.TodoItems.Add(entity);
 
