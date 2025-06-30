@@ -2,10 +2,10 @@ import { Component, TemplateRef, OnInit } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 import {
-  TodoListsClient, TodoItemsClient,
+  TodoListsClient, TodoItemsClient, TodoTagsClient,
   TodoListDto, TodoItemDto, PriorityLevelDto,
   CreateTodoListCommand, UpdateTodoListCommand,
-  CreateTodoItemCommand, UpdateTodoItemDetailCommand, ColourDto
+  CreateTodoItemCommand, UpdateTodoItemDetailCommand, ColourDto, TagDto, TodoItemTagDto, CreateTagToTodoItemCommand
 } from '../web-api-client';
 
 @Component({
@@ -16,6 +16,7 @@ import {
 export class TodoComponent implements OnInit {
   debug = false;
   deleting = false;
+  isAddingTag = false;
   deleteCountDown = 0;
   deleteCountDownInterval: any;
   lists: TodoListDto[];
@@ -23,24 +24,36 @@ export class TodoComponent implements OnInit {
   supportedColours: ColourDto[];
   selectedList: TodoListDto;
   selectedItem: TodoItemDto;
+  filteredTodoItems: TodoItemDto[] = [];
+  topTags: string[] = [];
+  tagsList: TagDto[] = [];
   newListEditor: any = {};
   listOptionsEditor: any = {};
+  tags: TodoItemTagDto[] = [];
   newListModalRef: BsModalRef;
   listOptionsModalRef: BsModalRef;
   deleteListModalRef: BsModalRef;
   itemDetailsModalRef: BsModalRef;
+  searchTimeout: any;
+  filterTag: any;
   itemDetailsFormGroup = this.fb.group({
     id: [null],
     listId: [null],
     priority: [''],
     colour: [''],
+    newTag: [''],
     note: ['']
+  });
+  itemSearchFormGroup = this.fb.group({
+    searchText: [''],
+    filterTag: ['']
   });
 
 
   constructor(
     private listsClient: TodoListsClient,
     private itemsClient: TodoItemsClient,
+    private tagsClient: TodoTagsClient,
     private modalService: BsModalService,
     private fb: FormBuilder
   ) { }
@@ -53,13 +66,38 @@ export class TodoComponent implements OnInit {
         this.supportedColours = result.supportedColours;
 
         if (this.lists.length) {
-          this.selectedList = this.lists[0];
+          this.onListSelection(this.lists[0]);
         }
       },
       error => console.error(error)
     );
+    this.tagsClient.get().subscribe(result => {
+      this.topTags = result.list;
+      this.tagsList = [{ name: 'All', id: 0 } as TagDto, ...result.tags]
+      this.itemSearchFormGroup.patchValue({filterTag: 0});
+      },
+      error => console.error(error)
+    );
   }
+  onListSelection(list: TodoListDto) {
+    this.selectedList = list;
+    this.filteredTodoItems = this.selectedList.items;
+  }
+  searchTodoItems() {
+    clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+      var searchText = this.itemSearchFormGroup.get("searchText")?.value;
 
+      this.filterTag = this.itemSearchFormGroup.get("filterTag")?.value;
+
+      this.filteredTodoItems = this.selectedList.items.filter(item => {
+        const matchesTag = this.filterTag === 0 || item.tags?.some(t => t.tagId === this.filterTag);
+        const matchesSearch = !searchText || item.title.toLowerCase().includes(searchText.toLowerCase());
+        return matchesSearch && matchesTag;
+      });
+    }, 300);
+   
+  }
   getRandomColour(): string {
     const randomIndex = Math.floor(Math.random() * this.supportedColours.length);
     return this.supportedColours[randomIndex].code;
@@ -74,7 +112,7 @@ export class TodoComponent implements OnInit {
         this.supportedColours = result.supportedColours;
 
         if (this.lists.length) {
-          this.selectedList = this.lists[0];
+          this.onListSelection(this.lists[0]);
         }
       },
       error => console.error(error)
@@ -95,7 +133,82 @@ export class TodoComponent implements OnInit {
     this.newListModalRef.hide();
     this.newListEditor = {};
   }
+  showAddTag(): void {
+    this.isAddingTag = true;
+  }
+  
+  addTag(): void {
+    const newTag = {
+      todoItemId: this.selectedItem.id,
+      name: this.itemDetailsFormGroup.get("newTag")?.value
+    } as CreateTagToTodoItemCommand;
 
+    this.tagsClient.create(newTag).subscribe(
+      result => {
+        const tagDto = {
+          todoItemId: newTag.todoItemId,
+          tagId: result,
+          tag: {
+            id: result,
+            name: newTag.name
+          } as TagDto
+        } as TodoItemTagDto;
+        if (!this.selectedItem.tags && !this.tags) {
+          this.selectedItem.tags = []
+          this.tags = []
+        }
+        this.selectedItem.tags.push(tagDto);
+        this.tags.push(tagDto);
+      },
+      error => {
+        const errors = JSON.parse(error.response);
+        if (errors && errors.Title) {
+          this.newListEditor.error = errors.Title[0];
+        }
+
+        setTimeout(() => document.getElementById('newTag').focus(), 250);
+      }
+    );
+    this.isAddingTag = false;
+  }
+  addTagInLine(todoItemId: number, tagName: string): void {
+    const newTag = {
+      todoItemId: todoItemId,
+      name: tagName
+    } as CreateTagToTodoItemCommand;
+
+    this.tagsClient.create(newTag).subscribe(
+      result => {
+        const tagDto = {
+          todoItemId: newTag.todoItemId,
+          tagId: result,
+          tag: {
+            id: result,
+            name: newTag.name
+          } as TagDto
+        } as TodoItemTagDto;
+        if (!this.selectedItem.tags && !this.tags) {
+          this.selectedItem.tags = []
+          this.tags = []
+        }
+        this.selectedItem.tags.push(tagDto);
+        this.tags.push(tagDto);
+      },
+      error => {
+        const errors = JSON.parse(error.response);
+        if (errors && errors.Title) {
+          this.newListEditor.error = errors.Title[0];
+        }
+
+        setTimeout(() => document.getElementById('newTag').focus(), 250);
+      }
+    );
+    this.isAddingTag = false;
+  }
+
+  cancelTag(): void {
+    this.isAddingTag = false;
+  }
   addList(): void {
     const list = {
       id: 0,
@@ -107,7 +220,7 @@ export class TodoComponent implements OnInit {
       result => {
         list.id = result;
         this.lists.push(list);
-        this.selectedList = list;
+        this.onListSelection(this.lists[0]);
         this.newListModalRef.hide();
         this.newListEditor = {};
       },
@@ -154,17 +267,32 @@ export class TodoComponent implements OnInit {
       () => {
         this.deleteListModalRef.hide();
         this.lists = this.lists.filter(t => t.id !== this.selectedList.id);
-        this.selectedList = this.lists.length ? this.lists[0] : null;
+        if (this.lists.length) {
+          this.onListSelection(this.lists[0]);
+        }
+        else {
+          this.selectedList = null;
+        }
       },
       error => console.error(error)
     );
+  }
+  removeTag(tag: TodoItemTagDto): void
+  {
+    this.tagsClient.delete(tag.todoItemId, tag.tagId).subscribe(
+      () => {
+        this.selectedItem.tags = this.selectedItem.tags.filter(t => t.tagId !== tag.tagId);
+        this.tags = this.selectedItem.tags;
+      },
+      error => console.error(error)
+    )
   }
 
   // Items
   showItemDetailsModal(template: TemplateRef<any>, item: TodoItemDto): void {
     this.selectedItem = item;
+    this.tags = item.tags;
     this.itemDetailsFormGroup.patchValue(this.selectedItem);
-
     this.itemDetailsModalRef = this.modalService.show(template);
     this.itemDetailsModalRef.onHidden.subscribe(() => {
         this.stopDeleteCountDown();
@@ -203,10 +331,11 @@ export class TodoComponent implements OnInit {
       priority: this.priorityLevels[0].value,
       title: '',
       colour: this.getRandomColour(),
-      done: false
+      done: false,
+      tags: [{ tagId: this.filterTag, todoItemId: 0 } as TodoItemTagDto]
     } as TodoItemDto;
-
     this.selectedList.items.push(item);
+    this.searchTodoItems();
     const index = this.selectedList.items.length - 1;
     this.editItem(item, 'itemTitle' + index);
   }
@@ -232,6 +361,10 @@ export class TodoComponent implements OnInit {
         .subscribe(
           result => {
             item.id = result;
+            var filter = this.tagsList.find(c => c.id === this.filterTag)
+            if (filter !== undefined) {
+              this.addTagInLine(item.id, filter.name);
+            }
           },
           error => console.error(error)
         );
@@ -245,7 +378,7 @@ export class TodoComponent implements OnInit {
     this.selectedItem.colour = item.colour;
 
     this.selectedItem = null;
-
+   
     if (isNewItem && pressedEnter) {
       setTimeout(() => this.addItem(), 250);
     }
