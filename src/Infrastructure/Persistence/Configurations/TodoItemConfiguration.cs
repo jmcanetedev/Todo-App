@@ -16,6 +16,10 @@ public class TodoItemConfiguration : IEntityTypeConfiguration<TodoItem>
         builder.Property(t => t.Note)
             .HasMaxLength(2);
 
+        builder.HasMany(t => t.Tags)
+            .WithOne(t => t.TodoItem)
+            .HasForeignKey(t => t.TodoItemId);
+
         builder.Property(x => x.Colour)
           .HasConversion(
               v => v.Code,

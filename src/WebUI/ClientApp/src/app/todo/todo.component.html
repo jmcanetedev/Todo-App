@@ -11,13 +11,13 @@
       <div class="clearfix">
         <h2 class="float-start">Lists</h2>
         <button class="btn btn-default float-end" title="New List..."
-          (click)="showNewListModal(newListModalTemplate)">
+                (click)="showNewListModal(newListModalTemplate)">
           <i class="bi bi-journal-plus"></i>
         </button>
       </div>
       <ul class="list-group">
         <li *ngFor="let list of lists; index as i" class="list-group-item"
-          [ngClass]="{ 'active': selectedList == list }" (click)="selectedList = list">
+            [ngClass]="{ 'active': selectedList == list }" (click)="onListSelection(list)">
           <div class="clearfix">
             <div class="float-start">
               {{ list.title }}
@@ -28,19 +28,49 @@
           </div>
         </li>
       </ul>
+      <div class="clearfix">
+        <h2 class="float-start mt-2">TOP Tags</h2>
+      </div>
+      <ul class="list-group">
+        <li *ngFor="let tag of topTags; index as i" class="list-group-item">
+          <div class="clearfix">
+            <div class="float-start">
+              {{ tag }}
+            </div>
+          </div>
+        </li>
+      </ul>
     </div>
     <div class="col-sm-8" *ngIf="selectedList">
-      <div class="clearfix">
+      <div class="clearfix mb-3">
         <h2 class="float-start">{{ selectedList.title }}</h2>
+
         <button id="listOptions" class="btn btn-default float-end" title="List Options..."
-          (click)="showListOptionsModal(listOptionsModalTemplate)">
+                (click)="showListOptionsModal(listOptionsModalTemplate)">
           <i class="bi bi-three-dots-vertical"></i>
         </button>
+        <form [formGroup]="itemSearchFormGroup" class="form">
+          <div class="row  float-end mx-1">
+            <div class="col-12">
+              <span class="m-1">Filter by Tag:</span>
+              <select class="form-control item-input-control w-100" (change)="searchTodoItems()" formControlName="filterTag">
+                <option [ngValue]="tag.id" *ngFor="let tag of tagsList">{{ tag.name }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="row  float-end">
+            <div class="col-12">
+              <span class="m-1">Search:</span>
+              <input type="text" (input)="searchTodoItems()" class="form-control item-input-control" formControlName="searchText" placeholder="Search Item" />
+            </div>
+          </div>
+        </form>
       </div>
       <ul id="todo-items" class="list-group mb-2">
-        <li class="list-group-item" *ngFor="let item of selectedList.items; index as i" [ngStyle]="{ 'background-color': item.colour }">
+        <li class="list-group-item" *ngFor="let item of filteredTodoItems; index as i" [ngStyle]="{ 'background-color': item.colour }">
           <div class="d-flex">
             <div class="todo-item-checkbox">
+            
               <input type="checkbox" [(ngModel)]="item.done" (change)="updateItem(item)" />
             </div>
             <div class="flex-fill">
@@ -131,6 +161,23 @@
           </option>
         </select>
       </div>
+      <div class="form-group">
+        <label>Tags</label>
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          <span *ngFor="let tag of tags" class="badge bg-secondary">
+            {{ tag.tag.name }}
+            <button type="button" class="btn-close btn-sm ms-1" (click)="removeTag(tag)"></button>
+          </span>
+         <button class="btn btn-success" (click)="showAddTag()">+</button>
+        </div>
+        <div *ngIf="isAddingTag" class="d-flex flex-wrap gap-2 mb-1">
+          <input id="newTag" formControlName="newTag" class="form-control" placeholder="" />
+          <button class="btn btn-primary" (click)="addTag()">Add Tag</button>
+          <button class="btn btn-danger" (click)="cancelTag()">Cancel</button>
+        </div>
+       
+      </div>
+
       <div class="form-group">
         <label for="note">Note</label>
         <textarea id="note" class="form-control" rows="3" formControlName="note"></textarea>

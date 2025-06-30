@@ -13,6 +13,10 @@ public class TodoItem : BaseAuditableEntity
     public DateTime? Reminder { get; set; }
     public Colour Colour { get; private set; } = Colour.White;
 
+    private readonly List<TodoItemTag> _tags = new();
+
+    public IReadOnlyCollection<TodoItemTag> Tags => _tags.AsReadOnly();
+
     private bool _done;
     public bool Done
     {
@@ -33,5 +37,17 @@ public class TodoItem : BaseAuditableEntity
     public void SetBackgroundColour(string code)
     {
         Colour = Colour.From(code);
+    }
+
+    public void AddTag(Tag tag)
+    {
+        tag.AddDomainEvent(new TagTodoItemCreatedEvent(tag));
+
+        if (_tags.All(t => t.Tag.Name != tag.Name))
+            _tags.Add(new TodoItemTag { Tag = tag, TodoItemId = Id });
+    }
+    public void RemoveTag(int tagId)
+    {
+        _tags.RemoveAll(t=>t.TagId == tagId && t.TodoItemId == Id);
     }
 }
