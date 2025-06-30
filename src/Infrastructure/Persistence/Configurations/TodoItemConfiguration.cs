@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Todo_App.Domain.Entities;
+using Todo_App.Domain.ValueObjects;
 
 namespace Todo_App.Infrastructure.Persistence.Configurations;
 
@@ -14,5 +15,10 @@ public class TodoItemConfiguration : IEntityTypeConfiguration<TodoItem>
 
         builder.Property(t => t.Note)
             .HasMaxLength(2);
+
+        builder.Property(x => x.Colour)
+          .HasConversion(
+              v => v.Code,
+              v => Colour.From(v));
     }
 }

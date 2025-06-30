@@ -5,7 +5,7 @@ import {
   TodoListsClient, TodoItemsClient,
   TodoListDto, TodoItemDto, PriorityLevelDto,
   CreateTodoListCommand, UpdateTodoListCommand,
-  CreateTodoItemCommand, UpdateTodoItemDetailCommand
+  CreateTodoItemCommand, UpdateTodoItemDetailCommand, ColourDto
 } from '../web-api-client';
 
 @Component({
@@ -20,6 +20,7 @@ export class TodoComponent implements OnInit {
   deleteCountDownInterval: any;
   lists: TodoListDto[];
   priorityLevels: PriorityLevelDto[];
+  supportedColours: ColourDto[];
   selectedList: TodoListDto;
   selectedItem: TodoItemDto;
   newListEditor: any = {};
@@ -32,6 +33,7 @@ export class TodoComponent implements OnInit {
     id: [null],
     listId: [null],
     priority: [''],
+    colour: [''],
     note: ['']
   });
 
@@ -48,6 +50,29 @@ export class TodoComponent implements OnInit {
       result => {
         this.lists = result.lists;
         this.priorityLevels = result.priorityLevels;
+        this.supportedColours = result.supportedColours;
+
+        if (this.lists.length) {
+          this.selectedList = this.lists[0];
+        }
+      },
+      error => console.error(error)
+    );
+  }
+
+  getRandomColour(): string {
+    const randomIndex = Math.floor(Math.random() * this.supportedColours.length);
+    return this.supportedColours[randomIndex].code;
+  }
+
+
+  reloadData(): void {
+    this.listsClient.get().subscribe(
+      result => {
+        this.lists = result.lists;
+        this.priorityLevels = result.priorityLevels;
+        this.supportedColours = result.supportedColours;
+
         if (this.lists.length) {
           this.selectedList = this.lists[0];
         }
@@ -163,6 +188,7 @@ export class TodoComponent implements OnInit {
 
         this.selectedItem.priority = item.priority;
         this.selectedItem.note = item.note;
+        this.selectedItem.colour = item.colour;
         this.itemDetailsModalRef.hide();
         this.itemDetailsFormGroup.reset();
       },
@@ -176,6 +202,7 @@ export class TodoComponent implements OnInit {
       listId: this.selectedList.id,
       priority: this.priorityLevels[0].value,
       title: '',
+      colour: this.getRandomColour(),
       done: false
     } as TodoItemDto;
 
@@ -214,6 +241,8 @@ export class TodoComponent implements OnInit {
         error => console.error(error)
       );
     }
+
+    this.selectedItem.colour = item.colour;
 
     this.selectedItem = null;
 
