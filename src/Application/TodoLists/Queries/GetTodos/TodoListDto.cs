@@ -23,7 +23,6 @@ public class TodoListDto : BaseDto, IMapFrom<TodoList>
     public void Mapping(Profile profile)
     {
         profile.CreateMap<TodoList, TodoListDto>()
-            .ForMember(dest => dest.Items, opt => opt.MapFrom(src =>src.Items.Where(i => i.DeletedOn == null)))
             .ForMember(d => d.Colour, opt => opt.MapFrom(s => s.Colour.Code));
     }
 }

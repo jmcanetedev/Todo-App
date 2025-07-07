@@ -32,7 +32,7 @@ public class GetTodosQueryHandler : IRequestHandler<GetTodosQuery, TodosVm>
 
             SupportedColours = Colour.GetSupportedColors().Select(c=> new ColourDto { Name = c.Name, Code = c.Code }).ToList(),
 
-            Lists = await _context.TodoLists.Where(c => c.DeletedOn == null && c.Items.Any(c => c.DeletedOn == null))
+            Lists = await _context.TodoLists
                 .AsNoTracking()
                 .ProjectTo<TodoListDto>(_mapper.ConfigurationProvider)
                 .OrderBy(t => t.Title)

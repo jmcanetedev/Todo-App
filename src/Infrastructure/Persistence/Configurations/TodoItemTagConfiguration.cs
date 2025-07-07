@@ -7,6 +7,8 @@ public class TodoItemTagConfiguration : IEntityTypeConfiguration<TodoItemTag>
 {
     public void Configure(EntityTypeBuilder<TodoItemTag> builder)
     {
+        builder.HasQueryFilter(t => t.DeletedOn == null);
+
         builder.HasKey(x=> new { x.TodoItemId, x.TagId });
     }
 }
