@@ -7,6 +7,8 @@ public class TodoTagConfiguration : IEntityTypeConfiguration<Tag>
 {
     public void Configure(EntityTypeBuilder<Tag> builder)
     {
+        builder.HasQueryFilter(t => t.DeletedOn == null);
+
         builder.Property(c=> c.Name)
             .HasMaxLength(50)
             .IsRequired();

@@ -5,6 +5,7 @@ namespace Todo_App.Domain.Common;
 public abstract class BaseEntity
 {
     public int Id { get; set; }
+    public DateTime? DeletedOn { get; private set; }
 
     private readonly List<BaseEvent> _domainEvents = new();
 
@@ -24,5 +25,9 @@ public abstract class BaseEntity
     public void ClearDomainEvents()
     {
         _domainEvents.Clear();
+    }
+    public void SoftDeleteEntity()
+    {
+        DeletedOn = DateTime.UtcNow;
     }
 }

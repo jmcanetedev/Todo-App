@@ -9,10 +9,11 @@ public class TodoListConfiguration : IEntityTypeConfiguration<TodoList>
 {
     public void Configure(EntityTypeBuilder<TodoList> builder)
     {
+        builder.HasQueryFilter(t => t.DeletedOn == null);
+
         builder.Property(t => t.Title)
             .HasMaxLength(200)
             .IsRequired();
-
 
         builder.Property(x => x.Colour)
           .HasConversion(
